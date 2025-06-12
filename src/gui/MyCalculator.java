@@ -83,7 +83,7 @@ public class MyCalculator extends JFrame {
 
         //button icons
         String[] buttonIcons = {
-            "CE", "C", "\u2190", "%    ",
+            "CE", "C", "\u2190", "%",
             "1/x", "x\u00B2", "\u221Ax", "/",
             "7", "8", "9", "x",
             "4", "5", "6", "-",
@@ -115,7 +115,7 @@ public class MyCalculator extends JFrame {
         switch (text) {
             case "C" -> {
                 display.setText("");
-                currentOperator = "";
+                currentOperator = null;
                 firstOperand = 0;
                 startNewNumber = true;
             }
@@ -123,19 +123,46 @@ public class MyCalculator extends JFrame {
                 String current = display.getText();
                 if (!current.isEmpty()) {
                     display.setText(current.substring(0, current.length() - 1));
+                    startNewNumber=false;
                 }
             }
             case "+", "-", "x", "%", "/" -> {
                 try {
                     double value = Double.parseDouble(display.getText());
-                    firstOperand = value;
+                    if (currentOperator != null && !startNewNumber) {
+                        switch (currentOperator) {
+                            case "+" ->
+                                firstOperand += value;
+                            case "-" ->
+                                firstOperand -= value;
+                            case "*" ->
+                                firstOperand *= value;
+                            case "%" ->
+                                firstOperand %= value;
+                            case "/" -> {
+                                if (value != 0) {
+                                    firstOperand /= value;
+                                } else {
+                                    display.setText("ERROR");
+                                    startNewNumber = true;
+                                    currentOperator = null;
+                                    return;
+                                }
+                            }
+                        }
+                    } else {
+                        firstOperand = value;
+                    }
                     currentOperator = text.equals("x") ? "*" : text;
+                    display.setText(String.valueOf(firstOperand));
                     startNewNumber = true;
                 } catch (NumberFormatException e) {
                     display.setText("ERROR");
                     startNewNumber = true;
+                    currentOperator = null;
                 }
             }
+
             case "=" -> {
                 try {
                     double value = Double.parseDouble(display.getText());
@@ -160,14 +187,17 @@ public class MyCalculator extends JFrame {
                         }
                     }
                     display.setText(String.valueOf(firstOperand));
-                    startNewNumber = true;
+                    startNewNumber = false;
                     currentOperator = null;
                 } catch (NumberFormatException e) {
                     display.setText("ERROR");
                     startNewNumber = true;
                 }
             }
-
+            case "CE" -> {
+                display.setText("0");
+                startNewNumber=true;
+            }
             default -> {
                 if (startNewNumber) {
                     if (text.equals(".")) {
